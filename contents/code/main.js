@@ -28,6 +28,7 @@ var config = {
 	ignoreMinimized: false,
 	ignoreShaded: true,
 	ignoreBorderOfClientArea: true,
+	ignoreOverlapped: true,
 	liveUpdate: true,
 	opacityOfSnapped: 0.8,
 	opacityOfUnaffected: 0.2,
@@ -107,6 +108,46 @@ function clientRemoved(client) {
 	checkArray(ignoreds);
 }
 
+
+function rectIntersects(rt1, rt2)
+{
+    var l1 = rt1.x1;
+    var r1 = rt1.x1;
+    if (rt1.x2 - rt1.x1 + 1 < 0)
+        l1 = rt1.x2;
+    else
+        r1 = rt1.x2;
+
+    var l2 = rt2.x1;
+    var r2 = rt2.x1;
+    if (rt2.x2 - rt2.x1 + 1 < 0)
+        l2 = rt2.x2;
+    else
+        r2 = rt2.x2;
+
+    if (l1 >= r2 || l2 >= r1)
+        return false;
+
+    var t1 = rt1.y1;
+    var b1 = rt1.y1;
+    if (rt1.y2 - rt1.y1 + 1 < 0)
+        t1 = rt1.y2;
+    else
+        b1 = rt1.y2;
+
+    var t2 = rt2.y1;
+    var b2 = rt2.y1;
+    if (rt2.y2 - rt2.y1 + 1 < 0)
+        t2 = rt2.y2;
+    else
+        b2 = rt2.y2;
+
+    if (t1 >= b2 || t2 >= b1)
+        return false;
+
+    return true;
+}
+
 function clientStartUserMovedResized(client) {
 	function addIgnored(client) {
 		if (config.opacityOfUnaffected === 1) return;
@@ -157,6 +198,9 @@ function clientStartUserMovedResized(client) {
 		if (c.screen !== client.screen) continue;
 		if (config.ignoreMinimized && c.minimized) continue;
 		if (c.activities.length !== 0 && c.activities.indexOf(workspace.currentActivity) === -1) continue;
+		var rt1 = { x1 : l1, x2 : r1, y1 : t1, y2 : b1 };
+		var rt2 = { x1 : l2, x2 : r2, y1 : t2, y2 : b2 };
+		if (config.ignoreOverlapped && rectIntersects(rt1, rt2)) continue;
 
 		// filter potentially visible unaffected windows
 		if (  c.fullScreen
